@@ -416,3 +416,75 @@ textarea.auto-adjust-obj {
     resize: none;
     overflow-y: hidden;
 }
+/* Media Queries para Telas Menores e Dispositivos Móveis */
+@media (max-width: 900px) {
+    body {
+        padding: 12px;
+    }
+
+    /* Transforma os grids de 2 colunas em coluna única */
+    .main-container,
+    .comparator-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .panel-left, 
+    .panel-right,
+    .comparator-card {
+        padding: 12px;
+    }
+
+    /* Melhora a disposição dos botões do painel */
+    .panel-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .actions-group {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    /* Garante altura confortável nos campos sem quebrar o layout */
+    textarea, .highlight-editor {
+        min-height: 180px;
+    }
+
+    /* Permite rolagem horizontal suave em linhas de array/chips longos */
+    .array-grid-container {
+        max-width: 100%;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    /* Ajusta inputs de data para não estourarem o container */
+    .time-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .time-row input[type="datetime-local"] {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .tab-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+}
+
