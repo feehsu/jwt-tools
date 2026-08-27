@@ -3,681 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JWT Interactive Studio Pro</title>
+    <title>JWT Tools - Studio Pro</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { margin: 0; padding: 20px; background-color: #1e1e1e; color: #d4d4d4; min-height: 100vh; display: flex; flex-direction: column; }
-        
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        h2 { margin: 0; color: #4ec9b0; }
-
-        .toolbar-container {
-            display: flex; gap: 15px; margin-bottom: 15px;
-        }
-
-        .toolbar-card {
-            background: #252526; padding: 10px 15px; border-radius: 6px;
-            border: 1px solid #3c3c3c; display: flex; align-items: center; gap: 10px;
-        }
-
-        .toolbar-card label { font-size: 13px; color: #9cdcfe; font-weight: bold; }
-        .toolbar-card input[type="text"] {
-            background: #1e1e1e; border: 1px solid #444; color: #ce9178;
-            padding: 5px 8px; border-radius: 3px; font-family: monospace; width: 220px;
-        }
-        .toolbar-card input[type="checkbox"] { cursor: pointer; }
-
-        .container { display: flex; gap: 20px; min-height: 480px; }
-        
-        .panel-left { flex: 0 0 40%; display: flex; flex-direction: column; min-height: 0; }
-        .panel-right { flex: 0 0 calc(60% - 20px); display: flex; flex-direction: column; min-height: 0; }
-        
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .panel-header label { font-weight: bold; color: #9cdcfe; }
-        .header-actions { display: flex; gap: 8px; align-items: center; }
-
-        textarea {
-            width: 100%; flex: 1; background-color: #252526; color: #d4d4d4;
-            border: 1px solid #3c3c3c; border-radius: 4px; padding: 12px;
-            font-family: 'Consolas', 'Courier New', monospace; font-size: 13px;
-            line-height: 1.4; resize: none; outline: none;
-        }
-        textarea:focus { border-color: #007acc; }
-
-        .tabs { display: flex; gap: 4px; }
-        .tab-btn {
-            background: #2d2d2d; color: #888; border: none; padding: 6px 14px;
-            cursor: pointer; border-radius: 4px 4px 0 0; font-weight: bold; font-size: 12px;
-        }
-        .tab-btn.active { background: #007acc; color: #fff; }
-
-        .tab-content { flex: 1; display: none; flex-direction: column; min-height: 0; overflow-y: auto; }
-        .tab-content.active { display: flex; }
-
-        .action-btn {
-            background: #0e639c; color: white; border: none; padding: 5px 12px;
-            border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 12px;
-        }
-        .action-btn:hover { background: #1177bb; }
-
-        .copy-btn {
-            background: #333333; color: #cccccc; border: 1px solid #444444;
-            padding: 5px 12px; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 12px;
-            transition: background-color 0.2s;
-        }
-        .copy-btn:hover { background: #444444; color: #ffffff; }
-
-        .time-claims-panel {
-            background: #2d2d2d; border: 1px solid #444; border-radius: 4px;
-            padding: 10px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;
-        }
-        .time-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .time-row span { font-size: 12px; color: #4ec9b0; font-weight: bold; width: 40px; }
-        .time-row input[type="datetime-local"] {
-            background: #1e1e1e; border: 1px solid #444; color: #b5cea8; padding: 4px;
-            border-radius: 3px; font-family: monospace; font-size: 11px;
-        }
-        .time-readable { font-size: 11px; color: #888; flex: 1; }
-
-        .pretty-container {
-            background-color: #252526; border: 1px solid #3c3c3c; border-radius: 4px;
-            padding: 15px; overflow-y: auto; flex: 1;
-        }
-        .accordion-item { border: 1px solid #333; border-radius: 4px; margin-bottom: 8px; background: #1e1e1e; }
-        .accordion-header {
-            background: #2d2d2d; padding: 8px 12px; cursor: pointer; font-weight: bold;
-            color: #4ec9b0; display: flex; justify-content: space-between; align-items: center;
-        }
-        .accordion-header-left { display: flex; align-items: center; gap: 8px; }
-        .accordion-body { padding: 12px; display: none; background: #252526; }
-        .accordion-item.open .accordion-body { display: block; }
-
-        .list-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .list-item input[type="text"] {
-            background: #1e1e1e; border: 1px solid #444; color: #ce9178; padding: 4px 8px;
-            border-radius: 3px; flex: 1; font-family: monospace;
-        }
-        .btn-add { background: #2e7d32; color: white; border: none; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; }
-        .btn-del { background: #c62828; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 11px; }
-
-        .field-group input[type="text"] {
-            background: #1e1e1e; border: 1px solid #444; color: #ce9178; padding: 6px;
-            border-radius: 3px; font-family: monospace; width: 100%;
-        }
-
-        .error { color: #f48771; font-size: 12px; margin-top: 5px; height: 16px; }
-
-        hr.divider { border: 0; height: 1px; background: #3c3c3c; margin: 30px 0 20px 0; }
-
-        .comparator-section { display: flex; flex-direction: column; gap: 15px; }
-        .comparator-inputs { display: flex; gap: 20px; }
-        .comparator-input-box { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-        .comparator-input-box label { font-size: 13px; font-weight: bold; color: #9cdcfe; }
-        .comparator-input-box textarea { height: 70px; min-height: 70px; }
-
-        .comparator-results { display: flex; gap: 20px; margin-top: 10px; align-items: flex-start; }
-        .comparator-card {
-            flex: 1; background: #252526; border: 1px solid #3c3c3c; border-radius: 6px;
-            padding: 15px; display: flex; flex-direction: column; height: auto;
-        }
-        .comparator-card .tab-content {
-            overflow-y: visible;
-            height: auto;
-        }
-        .comparator-card .pretty-container {
-            overflow-y: visible;
-            height: auto;
-        }
-        .comparator-card textarea {
-            min-height: 250px;
-        }
-
-        .diff-highlight {
-            background-color: #665c00 !important;
-            border: 1px solid #ffd700 !important;
-        }
-        .diff-highlight-text {
-            background-color: #554400 !important;
-            color: #fff2a8 !important;
-        }
-    </style>
 </head>
 <body>
 
-    <div class="header-bar">
-        <h2>JWT Interactive Studio Pro</h2>
-    </div>
-
-    <div class="toolbar-container">
-        <div class="toolbar-card">
-            <label for="secret-key">Secret Key (HMAC-SHA256):</label>
-            <input type="text" id="secret-key" value="your-default-secret-key-here" placeholder="Enter Secret Key...">
-        </div>
-        <div class="toolbar-card">
-            <input type="checkbox" id="auto-sync" checked>
-            <label for="auto-sync">Auto-sync changes</label>
+    <div class="header">
+        <h1>JWT Tools - Studio Pro</h1>
+        <div class="sync-option">
+            <label>
+                <input type="checkbox" id="auto-sync" checked>
+                Auto Sync
+            </label>
         </div>
     </div>
 
-    <div class="container">
+    <div class="main-container">
         <div class="panel-left">
             <div class="panel-header">
-                <label for="encoded">JWT Encoded (Token):</label>
-                <div class="header-actions">
-                    <button id="btn-copy-encoded" class="copy-btn" onclick="copyToClipboard('encoded', this)">Copy JWT encoded</button>
-                    <button id="btn-decode-manual" class="action-btn" style="display:none;" onclick="handleDecode(true)">Decode &gt;</button>
+                <h3>Encoded JWT</h3>
+                <div class="actions-group">
+                    <button class="btn-action" id="btn-decode-manual" style="display: none;">Decode &gt;</button>
+                    <button class="btn-copy" id="btn-copy-encoded-top">Copy</button>
                 </div>
             </div>
-            <textarea id="encoded" placeholder="Paste your JWT here..."></textarea>
-            <div id="error-encoded" class="error"></div>
+            
+            <textarea id="encoded" placeholder="Paste your encoded JWT here..."></textarea>
+            <div class="error-msg" id="error-encoded"></div>
+
+            <div class="secret-box">
+                <label for="secret-key">Secret Key (HMAC SHA256):</label>
+                <input type="text" id="secret-key" placeholder="your-256-bit-secret">
+            </div>
+
+            <div class="panel-footer">
+                <button class="btn-copy" id="btn-copy-encoded-bottom">Copy Encoded</button>
+            </div>
         </div>
 
         <div class="panel-right">
-            <div class="panel-header">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('raw')">Raw (JSON)</button>
-                    <button class="tab-btn" onclick="switchTab('pretty')">Pretty (Interactive)</button>
+            <div class="tabs">
+                <button class="tab-btn active" id="tab-btn-raw">Raw JSON</button>
+                <button class="tab-btn" id="tab-btn-pretty">Pretty Builder</button>
+            </div>
+
+            <div class="tab-content active" id="tab-raw">
+                <div class="panel-header">
+                    <h3>Raw Editor</h3>
+                    <div class="actions-group">
+                        <button class="btn-action" id="btn-encode-manual" style="display: none;">&lt; Encode</button>
+                        <button class="btn-copy" id="btn-copy-decoded-top">Copy JSON</button>
+                    </div>
                 </div>
-                <div class="header-actions">
-                    <button id="btn-copy-decoded" class="copy-btn" onclick="copyToClipboard('decoded', this)">Copy JWT decoded</button>
-                    <button id="btn-encode-manual" class="action-btn" style="display:none;" onclick="handleEncode(true)">&lt; Encode JWT</button>
+                
+                <div id="decoded-editor" contenteditable="true" class="highlight-editor" spellcheck="false"></div>
+                <div class="error-msg" id="error-decoded"></div>
+
+                <div class="panel-footer">
+                    <button class="btn-copy" id="btn-copy-decoded-bottom">Copy Raw</button>
                 </div>
             </div>
 
-            <div id="tab-raw" class="tab-content active">
-                <textarea id="decoded" placeholder="Decoded JSON..."></textarea>
-                <div id="error-decoded" class="error"></div>
-            </div>
-
-            <div id="tab-pretty" class="tab-content">
-                <div id="time-claims-panel" class="time-claims-panel" style="display:none;"></div>
-                <div id="pretty-builder" class="pretty-container"></div>
+            <div class="tab-content" id="tab-pretty">
+                <div id="pretty-builder"></div>
+                
+                <div class="panel-footer" style="margin-top: 15px;">
+                    <button class="btn-copy" id="btn-copy-pretty-bottom">Copy Current JSON</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <hr class="divider">
+    <hr class="section-divider">
 
-    <div class="comparator-section">
+    <div class="comparator-container">
         <h2>JWT Comparator</h2>
         
-        <div class="comparator-inputs">
-            <div class="comparator-input-box">
-                <label for="comp-jwt-1">JWT 1 (Left Token):</label>
-                <textarea id="comp-jwt-1" placeholder="Paste JWT 1 here..."></textarea>
-            </div>
-            <div class="comparator-input-box">
-                <label for="comp-jwt-2">JWT 2 (Right Token):</label>
-                <textarea id="comp-jwt-2" placeholder="Paste JWT 2 here..."></textarea>
-            </div>
-        </div>
-
-        <div class="comparator-results">
+        <div class="comparator-grid">
             <div class="comparator-card">
-                <div class="panel-header">
-                    <div class="tabs">
-                        <button class="tab-btn" onclick="switchCompTab(1, 'raw')">Raw (JSON)</button>
-                        <button class="tab-btn active" onclick="switchCompTab(1, 'pretty')">Pretty (Interactive)</button>
-                    </div>
+                <h3>Token 1</h3><br>
+                <textarea id="comp-jwt-1" placeholder="Paste first JWT..."></textarea>
+                
+                <div class="tabs" style="margin-top: 10px;">
+                    <button class="tab-btn active" id="comp1-tab-raw">Raw</button>
+                    <button class="tab-btn" id="comp1-tab-pretty">Pretty</button>
                 </div>
-                <div id="comp-1-raw" class="tab-content">
-                    <textarea id="comp-1-raw-text" readonly placeholder="Decoded JSON 1..."></textarea>
+
+                <div id="comp-1-raw" class="tab-content active">
+                    <div class="highlight-editor" id="comp-1-raw-text"></div>
                 </div>
-                <div id="comp-1-pretty" class="tab-content active pretty-container"></div>
+                <div id="comp-1-pretty" class="tab-content"></div>
             </div>
 
             <div class="comparator-card">
-                <div class="panel-header">
-                    <div class="tabs">
-                        <button class="tab-btn" onclick="switchCompTab(2, 'raw')">Raw (JSON)</button>
-                        <button class="tab-btn active" onclick="switchCompTab(2, 'pretty')">Pretty (Interactive)</button>
-                    </div>
+                <h3>Token 2</h3><br>
+                <textarea id="comp-jwt-2" placeholder="Paste second JWT..."></textarea>
+                
+                <div class="tabs" style="margin-top: 10px;">
+                    <button class="tab-btn active" id="comp2-tab-raw">Raw</button>
+                    <button class="tab-btn" id="comp2-tab-pretty">Pretty</button>
                 </div>
-                <div id="comp-2-raw" class="tab-content">
-                    <textarea id="comp-2-raw-text" readonly placeholder="Decoded JSON 2..."></textarea>
+
+                <div id="comp-2-raw" class="tab-content active">
+                    <div class="highlight-editor" id="comp-2-raw-text"></div>
                 </div>
-                <div id="comp-2-pretty" class="tab-content active pretty-container"></div>
+                <div id="comp-2-pretty" class="tab-content"></div>
             </div>
         </div>
     </div>
 
-    <script>
-        const encodedInput = document.getElementById('encoded');
-        const decodedInput = document.getElementById('decoded');
-        const prettyBuilder = document.getElementById('pretty-builder');
-        const timeClaimsPanel = document.getElementById('time-claims-panel');
-        const errorEncoded = document.getElementById('error-encoded');
-        const errorDecoded = document.getElementById('error-decoded');
-        const autoSyncCheck = document.getElementById('auto-sync');
-        const secretKeyInput = document.getElementById('secret-key');
-        const btnEncodeManual = document.getElementById('btn-encode-manual');
-        const btnDecodeManual = document.getElementById('btn-decode-manual');
-
-        let currentJsonObject = {};
-        let headerJsonObject = { alg: "HS256", typ: "JWT" };
-        let isUpdating = false;
-
-        autoSyncCheck.addEventListener('change', () => {
-            const auto = autoSyncCheck.checked;
-            btnEncodeManual.style.display = auto ? 'none' : 'block';
-            btnDecodeManual.style.display = auto ? 'none' : 'block';
-        });
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.panel-right .tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.panel-right .tab-content').forEach(c => c.classList.remove('active'));
-
-            if (tabName === 'raw') {
-                document.querySelectorAll('.panel-right .tab-btn')[0].classList.add('active');
-                document.getElementById('tab-raw').classList.add('active');
-            } else {
-                document.querySelectorAll('.panel-right .tab-btn')[1].classList.add('active');
-                document.getElementById('tab-pretty').classList.add('active');
-                renderPrettyUI();
-            }
-        }
-
-        function copyToClipboard(elementId, buttonEl) {
-            const textToCopy = document.getElementById(elementId).value;
-            if (!textToCopy) return;
-
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                const originalText = buttonEl.textContent;
-                buttonEl.textContent = 'Copied!';
-                buttonEl.style.backgroundColor = '#2e7d32';
-                buttonEl.style.borderColor = '#2e7d32';
-                
-                setTimeout(() => {
-                    buttonEl.textContent = originalText;
-                    buttonEl.style.backgroundColor = '';
-                    buttonEl.style.borderColor = '';
-                }, 1500);
-            });
-        }
-
-        function base64UrlDecode(str) {
-            let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-            while (base64.length % 4 !== 0) base64 += '=';
-            const jsonString = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-            return JSON.parse(jsonString);
-        }
-
-        function base64UrlEncode(obj) {
-            const jsonString = typeof obj === 'string' ? obj : JSON.stringify(obj);
-            const base64 = btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1)));
-            return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        }
-
-        function signHmacSHA256(unsignedToken, secret) {
-            const signature = CryptoJS.HmacSHA256(unsignedToken, secret);
-            return CryptoJS.enc.Base64.stringify(signature)
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=/g, '');
-        }
-
-        function generateToken() {
-            const encodedHeader = base64UrlEncode(headerJsonObject);
-            const encodedPayload = base64UrlEncode(currentJsonObject);
-            const unsignedToken = `${encodedHeader}.${encodedPayload}`;
-            
-            const secret = secretKeyInput.value.trim();
-            let signature = "";
-            
-            if (secret) {
-                signature = signHmacSHA256(unsignedToken, secret);
-            } else {
-                const parts = encodedInput.value.split('.');
-                signature = parts.length === 3 ? parts[2] : "";
-            }
-
-            return `${unsignedToken}.${signature}`;
-        }
-
-        function handleDecode(force = false) {
-            if (isUpdating || (!autoSyncCheck.checked && !force)) return;
-            isUpdating = true;
-            errorEncoded.textContent = '';
-
-            try {
-                const rawText = encodedInput.value.trim();
-                if (!rawText) {
-                    currentJsonObject = {};
-                    decodedInput.value = '';
-                    prettyBuilder.innerHTML = '';
-                    timeClaimsPanel.style.display = 'none';
-                } else {
-                    const parts = rawText.split('.');
-                    if (parts.length >= 2) {
-                        headerJsonObject = base64UrlDecode(parts[0]);
-                        currentJsonObject = base64UrlDecode(parts[1]);
-                    } else {
-                        currentJsonObject = base64UrlDecode(parts[0]);
-                    }
-                    decodedInput.value = JSON.stringify(currentJsonObject, null, 2);
-                    renderPrettyUI();
-                }
-            } catch (e) {
-                errorEncoded.textContent = 'Invalid Token/Base64.';
-            }
-            isUpdating = false;
-        }
-
-        function handleEncode(force = false) {
-            if (isUpdating || (!autoSyncCheck.checked && !force)) return;
-            isUpdating = true;
-            errorDecoded.textContent = '';
-
-            try {
-                currentJsonObject = JSON.parse(decodedInput.value);
-                encodedInput.value = generateToken();
-                renderPrettyUI();
-            } catch (e) {
-                errorDecoded.textContent = 'Invalid JSON.';
-            }
-            isUpdating = false;
-        }
-
-        encodedInput.addEventListener('input', () => handleDecode());
-        decodedInput.addEventListener('input', () => handleEncode());
-        secretKeyInput.addEventListener('input', () => { if (autoSyncCheck.checked) handleEncode(true); });
-
-        function epochToDatetimeLocal(epoch) {
-            const date = new Date(epoch * 1000);
-            const pad = num => String(num).padStart(2, '0');
-            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-        }
-
-        function datetimeLocalToEpoch(datetimeStr) {
-            return Math.floor(new Date(datetimeStr).getTime() / 1000);
-        }
-
-        function renderTimeClaims() {
-            timeClaimsPanel.innerHTML = '';
-            const claims = ['iat', 'exp', 'nbf'];
-            let hasTimeClaim = false;
-
-            claims.forEach(claim => {
-                if (currentJsonObject.hasOwnProperty(claim) && typeof currentJsonObject[claim] === 'number') {
-                    hasTimeClaim = true;
-                    const epochVal = currentJsonObject[claim];
-                    const dateObj = new Date(epochVal * 1000);
-
-                    const row = document.createElement('div');
-                    row.className = 'time-row';
-
-                    const label = document.createElement('span');
-                    label.textContent = claim.toUpperCase() + ':';
-
-                    const dateInput = document.createElement('input');
-                    dateInput.type = 'datetime-local';
-                    dateInput.value = epochToDatetimeLocal(epochVal);
-                    dateInput.onchange = () => {
-                        const newEpoch = datetimeLocalToEpoch(dateInput.value);
-                        if (!isNaN(newEpoch)) {
-                            currentJsonObject[claim] = newEpoch;
-                            syncFromPretty();
-                        }
-                    };
-
-                    const readable = document.createElement('div');
-                    readable.className = 'time-readable';
-                    readable.textContent = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-
-                    row.appendChild(label);
-                    row.appendChild(dateInput);
-                    row.appendChild(readable);
-                    timeClaimsPanel.appendChild(row);
-                }
-            });
-
-            timeClaimsPanel.style.display = hasTimeClaim ? 'flex' : 'none';
-        }
-
-        function renderPrettyUI() {
-            prettyBuilder.innerHTML = '';
-            renderTimeClaims();
-
-            if (!currentJsonObject || Object.keys(currentJsonObject).length === 0) {
-                prettyBuilder.innerHTML = '<span style="color:#666">No decoded data to display.</span>';
-                return;
-            }
-
-            Object.keys(currentJsonObject).forEach(key => {
-                const val = currentJsonObject[key];
-                const itemEl = document.createElement('div');
-                itemEl.className = 'accordion-item open';
-
-                const header = document.createElement('div');
-                header.className = 'accordion-header';
-                
-                const headerLeft = document.createElement('div');
-                headerLeft.className = 'accordion-header-left';
-                headerLeft.innerHTML = `<span>${key}</span> <small style="color:#888">${Array.isArray(val) ? 'Array [' + val.length + ']' : typeof val}</small>`;
-
-                const deleteKeyBtn = document.createElement('button');
-                deleteKeyBtn.className = 'btn-del';
-                deleteKeyBtn.textContent = 'X';
-                deleteKeyBtn.title = 'Remove entire key';
-                deleteKeyBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    delete currentJsonObject[key];
-                    syncFromPretty();
-                };
-
-                header.appendChild(headerLeft);
-                header.appendChild(deleteKeyBtn);
-
-                header.onclick = (e) => {
-                    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
-                        itemEl.classList.toggle('open');
-                    }
-                };
-
-                const body = document.createElement('div');
-                body.className = 'accordion-body';
-
-                if (Array.isArray(val)) {
-                    val.forEach((itemVal, idx) => {
-                        const row = document.createElement('div');
-                        row.className = 'list-item';
-
-                        const chk = document.createElement('input');
-                        chk.type = 'checkbox';
-                        chk.checked = true;
-                        chk.onchange = () => {
-                            if (!chk.checked) currentJsonObject[key].splice(idx, 1);
-                            syncFromPretty();
-                        };
-
-                        const txt = document.createElement('input');
-                        txt.type = 'text';
-                        txt.value = typeof itemVal === 'object' ? JSON.stringify(itemVal) : itemVal;
-                        txt.oninput = () => {
-                            currentJsonObject[key][idx] = txt.value;
-                            syncFromPretty();
-                        };
-
-                        const btnDel = document.createElement('button');
-                        btnDel.className = 'btn-del';
-                        btnDel.textContent = 'X';
-                        btnDel.onclick = () => {
-                            currentJsonObject[key].splice(idx, 1);
-                            syncFromPretty();
-                        };
-
-                        row.appendChild(chk);
-                        row.appendChild(txt);
-                        row.appendChild(btnDel);
-                        body.appendChild(row);
-                    });
-
-                    const btnAdd = document.createElement('button');
-                    btnAdd.className = 'btn-add';
-                    btnAdd.textContent = '+ Add Item';
-                    btnAdd.onclick = () => {
-                        currentJsonObject[key].push("new_item");
-                        syncFromPretty();
-                    };
-                    body.appendChild(btnAdd);
-
-                } else if (typeof val === 'object' && val !== null) {
-                    const subArea = document.createElement('textarea');
-                    subArea.style.height = '100px';
-                    subArea.value = JSON.stringify(val, null, 2);
-                    subArea.oninput = () => {
-                        try {
-                            currentJsonObject[key] = JSON.parse(subArea.value);
-                            syncFromPretty();
-                        } catch(e){}
-                    };
-                    body.appendChild(subArea);
-
-                } else {
-                    const group = document.createElement('div');
-                    group.className = 'field-group';
-                    const inp = document.createElement('input');
-                    inp.type = 'text';
-                    inp.value = val;
-                    inp.oninput = () => {
-                        let parsedVal = inp.value;
-                        if (!isNaN(inp.value) && inp.value.trim() !== '') parsedVal = Number(inp.value);
-                        currentJsonObject[key] = parsedVal;
-                        syncFromPretty();
-                    };
-                    group.appendChild(inp);
-                    body.appendChild(group);
-                }
-
-                itemEl.appendChild(header);
-                itemEl.appendChild(body);
-                prettyBuilder.appendChild(itemEl);
-            });
-        }
-
-        function syncFromPretty() {
-            decodedInput.value = JSON.stringify(currentJsonObject, null, 2);
-            handleEncode();
-        }
-
-        const compJwt1 = document.getElementById('comp-jwt-1');
-        const compJwt2 = document.getElementById('comp-jwt-2');
-        const comp1RawText = document.getElementById('comp-1-raw-text');
-        const comp2RawText = document.getElementById('comp-2-raw-text');
-        const comp1Pretty = document.getElementById('comp-1-pretty');
-        const comp2Pretty = document.getElementById('comp-2-pretty');
-
-        let compObj1 = null;
-        let compObj2 = null;
-
-        function switchCompTab(panelNum, tabName) {
-            const card = document.querySelectorAll('.comparator-card')[panelNum - 1];
-            card.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-            if (tabName === 'raw') {
-                card.querySelectorAll('.tab-btn')[0].classList.add('active');
-                document.getElementById(`comp-${panelNum}-raw`).classList.add('active');
-            } else {
-                card.querySelectorAll('.tab-btn')[1].classList.add('active');
-                document.getElementById(`comp-${panelNum}-pretty`).classList.add('active');
-            }
-        }
-
-        function parseTokenPayload(tokenStr) {
-            if (!tokenStr.trim()) return null;
-            try {
-                const parts = tokenStr.trim().split('.');
-                if (parts.length >= 2) return base64UrlDecode(parts[1]);
-                return base64UrlDecode(parts[0]);
-            } catch (e) {
-                return null;
-            }
-        }
-
-        function runComparison() {
-            compObj1 = parseTokenPayload(compJwt1.value);
-            compObj2 = parseTokenPayload(compJwt2.value);
-
-            comp1RawText.value = compObj1 ? JSON.stringify(compObj1, null, 2) : '';
-            comp2RawText.value = compObj2 ? JSON.stringify(compObj2, null, 2) : '';
-
-            renderCompPretty(1, compObj1, compObj2);
-            renderCompPretty(2, compObj2, compObj1);
-        }
-
-        function renderCompPretty(panelNum, primaryObj, targetObj) {
-            const container = panelNum === 1 ? comp1Pretty : comp2Pretty;
-            container.innerHTML = '';
-
-            if (!primaryObj) {
-                container.innerHTML = '<span style="color:#666">No valid token payload.</span>';
-                return;
-            }
-
-            Object.keys(primaryObj).forEach(key => {
-                const val = primaryObj[key];
-                const targetVal = targetObj ? targetObj[key] : undefined;
-                const isDifferent = JSON.stringify(val) !== JSON.stringify(targetVal);
-
-                const itemEl = document.createElement('div');
-                itemEl.className = 'accordion-item open';
-
-                const header = document.createElement('div');
-                header.className = 'accordion-header';
-                if (isDifferent) header.classList.add('diff-highlight');
-                
-                header.innerHTML = `<span>${key}</span> <small style="color:${isDifferent ? '#fff2a8' : '#888'}">${Array.isArray(val) ? 'Array [' + val.length + ']' : typeof val}</small>`;
-
-                const body = document.createElement('div');
-                body.className = 'accordion-body';
-
-                if (Array.isArray(val)) {
-                    val.forEach((itemVal, idx) => {
-                        const targetArrVal = Array.isArray(targetVal) ? targetVal[idx] : undefined;
-                        const isItemDiff = JSON.stringify(itemVal) !== JSON.stringify(targetArrVal);
-
-                        const row = document.createElement('div');
-                        row.className = 'list-item';
-
-                        const txt = document.createElement('input');
-                        txt.type = 'text';
-                        txt.readOnly = true;
-                        txt.value = typeof itemVal === 'object' ? JSON.stringify(itemVal) : itemVal;
-                        if (isItemDiff) txt.classList.add('diff-highlight-text');
-
-                        row.appendChild(txt);
-                        body.appendChild(row);
-                    });
-                } else if (typeof val === 'object' && val !== null) {
-                    const subArea = document.createElement('textarea');
-                    subArea.style.height = '100px';
-                    subArea.readOnly = true;
-                    subArea.value = JSON.stringify(val, null, 2);
-                    if (isDifferent) subArea.classList.add('diff-highlight-text');
-                    body.appendChild(subArea);
-                } else {
-                    const group = document.createElement('div');
-                    group.className = 'field-group';
-                    const inp = document.createElement('input');
-                    inp.type = 'text';
-                    inp.readOnly = true;
-                    inp.value = val;
-                    if (isDifferent) inp.classList.add('diff-highlight-text');
-                    group.appendChild(inp);
-                    body.appendChild(group);
-                }
-
-                header.onclick = () => itemEl.classList.toggle('open');
-                itemEl.appendChild(header);
-                itemEl.appendChild(body);
-                container.appendChild(itemEl);
-            });
-        }
-
-        compJwt1.addEventListener('input', runComparison);
-        compJwt2.addEventListener('input', runComparison);
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
