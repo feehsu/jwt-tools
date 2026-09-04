@@ -1,10 +1,4 @@
-/**
- * JWT Tools - Studio Pro
- * Lógica funcional unificada
- */
-
 document.addEventListener("DOMContentLoaded", () => {
-  // Estado interno da aplicação
   const state = {
     encodedJwt: "",
     headerObj: { alg: "HS256", typ: "JWT" },
@@ -13,33 +7,28 @@ document.addEventListener("DOMContentLoaded", () => {
     secretKey: "your-256-bit-secret",
     isSignatureValid: false,
     autoSync: true,
-    expandedAllClaims: {}, // Guarda quais claims estão expandidas via botão ALL
-    collapsedAccordion: {}, // Guarda quais acordeões estão recolhidos
+    expandedAllClaims: {},
+    collapsedAccordion: {},
     searchTerm: "",
   };
 
-  // Elementos do DOM
   const elements = {
     chkAutoSync: document.getElementById("chk-auto-sync"),
     jwtEncodedInput: document.getElementById("jwt-encoded-input"),
     jwtHighlightOverlay: document.getElementById("jwt-highlight-overlay"),
     secretKeyInput: document.getElementById("secret-key-input"),
     secretValidationBadge: document.getElementById("secret-validation-badge"),
-    
-    // Tabs
+
     tabBtnRaw: document.getElementById("tab-btn-raw"),
     tabBtnPretty: document.getElementById("tab-btn-pretty"),
     tabContentRaw: document.getElementById("tab-content-raw"),
     tabContentPretty: document.getElementById("tab-content-pretty"),
 
-    // Raw JSON
     rawJsonTextarea: document.getElementById("raw-json-textarea"),
 
-    // Pretty Builder
     prettySearchInput: document.getElementById("pretty-search-input"),
     prettyAccordion: document.getElementById("pretty-builder-accordion"),
 
-    // Botões de Cópia
     btnCopyEncodedTop: document.getElementById("btn-copy-encoded-top"),
     btnCopyEncodedBottom: document.getElementById("btn-copy-encoded-bottom"),
     btnCopyDecodedTop: document.getElementById("btn-copy-decoded-top"),
@@ -47,13 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
     btnCopyPrettyTop: document.querySelector(".btn-copy-json-pretty"),
     btnCopyPrettyBottom: document.getElementById("btn-copy-pretty-bottom"),
 
-    // Comparator
     comparatorJwtA: document.getElementById("comparator-jwt-a"),
     comparatorJwtB: document.getElementById("comparator-jwt-b"),
     comparatorResult: document.getElementById("comparator-result"),
   };
 
-  // Utilitários de Base64Url
   function base64UrlEncode(str) {
     const base64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(str));
     return base64.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
@@ -69,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Assinatura HMAC SHA256 e Validação
   function computeHmacSignature(headerB64, payloadB64, secret) {
     const dataToSign = `${headerB64}.${payloadB64}`;
     const hash = CryptoJS.HmacSHA256(dataToSign, secret);
@@ -85,13 +71,21 @@ document.addEventListener("DOMContentLoaded", () => {
     return expectedSig === targetSignature;
   }
 
-  // Colorizador de Encoded JWT (Ajuste 1)
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   function renderJwtHighlight(token) {
     if (!token || typeof token !== "string") {
       elements.jwtHighlightOverlay.innerHTML = "";
       return;
     }
+
     const parts = token.trim().split(".");
+
     if (parts.length === 3) {
       elements.jwtHighlightOverlay.innerHTML =
         `<span class="jwt-part-header">${escapeHtml(parts[0])}</span>` +
@@ -99,57 +93,92 @@ document.addEventListener("DOMContentLoaded", () => {
         `<span class="jwt-part-payload">${escapeHtml(parts[1])}</span>` +
         `<span class="jwt-part-dot">.</span>` +
         `<span class="jwt-part-signature">${escapeHtml(parts[2])}</span>`;
+    } else if (parts.length === 1) {
+      elements.jwtHighlightOverlay.innerHTML = `<span class="jwt-part-payload">${escapeHtml(parts[0])}</span>`;
+    } else if (parts.length === 2) {
+      elements.jwtHighlightOverlay.innerHTML =
+        `<span class="jwt-part-header">${escapeHtml(parts[0])}</span>` +
+        `<span class="jwt-part-dot">.</span>` +
+        `<span class="jwt-part-payload">${escapeHtml(parts[1])}</span>`;
     } else {
       elements.jwtHighlightOverlay.textContent = token;
     }
   }
 
-  function escapeHtml(str) {
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
-  // Parse do Encoded JWT -> Estado
   function parseEncodedJwt(token) {
     state.encodedJwt = token;
     renderJwtHighlight(token);
 
-    const parts = token.trim().split(".");
-    if (parts.length !== 3) {
+    if (!token.trim()) {
+      state.payloadObj = {};
+      state.headerObj = { alg: "HS256", typ: "JWT" };
+      state.signature = "";
       updateValidationUI(false);
+      syncDecodedViews();
       return;
     }
 
-    const headerStr = base64UrlDecode(parts[0]);
-    const payloadStr = base64UrlDecode(parts[1]);
+    const parts = token.trim().split(".");
 
-    if (!headerStr || !payloadStr) {
-      updateValidationUI(false);
-      return;
+    if (parts.length === 1) {
+      const payloadStr = base64UrlDecode(parts[0]);
+      if (payloadStr) {
+        try {
+          state.payloadObj = JSON.parse(payloadStr);
+          state.signature = "";
+          updateValidationUI(false);
+          syncDecodedViews();
+          return;
+        } catch (e) {}
+      }
+    }
+
+    if (parts.length >= 2) {
+      const headerStr = base64UrlDecode(parts[0]);
+      const payloadStr = base64UrlDecode(parts[1]);
+
+      if (headerStr && payloadStr) {
+        try {
+          state.headerObj = JSON.parse(headerStr);
+          state.payloadObj = JSON.parse(payloadStr);
+          state.signature = parts[2] || "";
+
+          if (parts.length === 3) {
+            state.isSignatureValid = verifySignature(
+              parts[0],
+              parts[1],
+              state.signature,
+              state.secretKey
+            );
+          } else {
+            state.isSignatureValid = false;
+          }
+
+          updateValidationUI(state.isSignatureValid);
+          syncDecodedViews();
+          return;
+        } catch (e) {}
+      } else if (payloadStr) {
+        try {
+          state.payloadObj = JSON.parse(payloadStr);
+          state.signature = "";
+          updateValidationUI(false);
+          syncDecodedViews();
+          return;
+        } catch (e) {}
+      }
     }
 
     try {
-      state.headerObj = JSON.parse(headerStr);
-      state.payloadObj = JSON.parse(payloadStr);
-      state.signature = parts[2];
-
-      state.isSignatureValid = verifySignature(
-        parts[0],
-        parts[1],
-        state.signature,
-        state.secretKey
-      );
-
-      updateValidationUI(state.isSignatureValid);
+      state.payloadObj = JSON.parse(token);
+      state.signature = "";
+      updateValidationUI(false);
       syncDecodedViews();
     } catch (e) {
       updateValidationUI(false);
     }
   }
 
-  // Recálculo e Codificação a partir do Estado Decodificado / Secret Key
   function buildAndSetEncodedJwt() {
     try {
       const headerB64 = base64UrlEncode(JSON.stringify(state.headerObj));
@@ -167,12 +196,9 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.jwtEncodedInput.value = state.encodedJwt;
       renderJwtHighlight(state.encodedJwt);
       updateValidationUI(true);
-    } catch (e) {
-      console.error("Erro ao gerar JWT Encoded", e);
-    }
+    } catch (e) {}
   }
 
-  // Atualização Visual do Badge de Validação do Secret Key
   function updateValidationUI(isValid) {
     state.isSignatureValid = isValid;
     if (isValid) {
@@ -182,35 +208,32 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.secretValidationBadge.textContent = "INVALID";
       elements.secretValidationBadge.className = "badge badge-invalid";
     }
-    renderPrettyBuilder(); // Atualiza a linha de assinatura no Pretty Builder
-  }
-
-  // Sincroniza abas Raw JSON e Pretty Builder
-  function syncDecodedViews() {
-    elements.rawJsonTextarea.value = JSON.stringify(state.payloadObj, null, 2);
     renderPrettyBuilder();
   }
 
-  // Renderização do Pretty Builder
+  function syncDecodedViews() {
+    elements.rawJsonTextarea.value = Object.keys(state.payloadObj).length
+      ? JSON.stringify(state.payloadObj, null, 2)
+      : "";
+    renderPrettyBuilder();
+  }
+
   function renderPrettyBuilder() {
     elements.prettyAccordion.innerHTML = "";
 
-    // 1. Bloco HEADER
     renderHeaderSection();
 
-    // 2. Claims do Payload
     const filter = state.searchTerm.toLowerCase().trim();
     const keys = Object.keys(state.payloadObj);
 
     keys.forEach((key) => {
       const val = state.payloadObj[key];
       if (filter && !matchesFilter(key, val, filter)) {
-        return; // Filtra a claim
+        return;
       }
       renderClaimItem(key, val, filter);
     });
 
-    // 3. Bloco SIGNATURE
     renderSignatureSection();
   }
 
@@ -228,7 +251,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return false;
   }
 
-  // Renderiza a Seção do Header (alg/typ)
   function renderHeaderSection() {
     const isCollapsed = state.collapsedAccordion["HEADER"];
     const algVal = state.headerObj.alg || "HS256";
@@ -259,7 +281,6 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.prettyAccordion.appendChild(item);
   }
 
-  // Renderiza cada Claim do Payload
   function renderClaimItem(key, val, filter) {
     const isArray = Array.isArray(val);
     const isObject = typeof val === "object" && val !== null && !isArray;
@@ -288,12 +309,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="btn-icon-action btn-delete-claim" data-key="${escapeHtml(key)}">×</button>
         </div>
       </div>
-      <div class="claim-body" style="display: ${isCollapsed ? "none" : "block"}">
-        <!-- O corpo será injetado dinamicamente -->
-      </div>
+      <div class="claim-body" style="display: ${isCollapsed ? "none" : "block"}"></div>
     `;
 
-    // Eventos do Header
     const headerEl = item.querySelector(".claim-header");
     headerEl.addEventListener("click", (e) => {
       if (e.target.closest(".btn-all-toggle") || e.target.closest(".btn-delete-claim")) return;
@@ -301,7 +319,6 @@ document.addEventListener("DOMContentLoaded", () => {
       renderPrettyBuilder();
     });
 
-    // Delete Claim
     const delBtn = item.querySelector(".btn-delete-claim");
     if (delBtn) {
       delBtn.addEventListener("click", () => {
@@ -310,7 +327,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Toggle ALL
     const allBtn = item.querySelector(".btn-all-toggle");
     if (allBtn) {
       allBtn.addEventListener("click", (e) => {
@@ -320,7 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Render do Corpo da Claim
     const bodyEl = item.querySelector(".claim-body");
     if (!isCollapsed) {
       if (isArray) {
@@ -330,7 +345,6 @@ document.addEventListener("DOMContentLoaded", () => {
           JSON.stringify(val, null, 2)
         )}</pre>`;
       } else {
-        // Valor simples
         bodyEl.innerHTML = `
           <input type="text" class="input-text claim-simple-value" data-key="${escapeHtml(key)}" value="${escapeHtml(String(val))}">
         `;
@@ -345,7 +359,6 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.prettyAccordion.appendChild(item);
   }
 
-  // Renderização do corpo do Array (Ajustes 4, 5 e 6)
   function renderArrayClaimBody(container, key, arrayVal, isAllExpanded, filter) {
     let displayItems = arrayVal;
     if (filter) {
@@ -358,7 +371,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const PREVIEW_LIMIT = 3;
 
     if (!isAllExpanded && totalCount > PREVIEW_LIMIT) {
-      // Estado Resumido / Preview
       const visibleChips = displayItems.slice(0, PREVIEW_LIMIT);
       const remainingCount = totalCount - visibleChips.length;
 
@@ -382,7 +394,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       container.appendChild(previewContainer);
     } else {
-      // Estado Expandido (Com caixa de scroll max-height)
       const box = document.createElement("div");
       box.className = "array-expanded-box";
 
@@ -392,7 +403,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       container.appendChild(box);
 
-      // Botão Add Item
       const addBtn = document.createElement("button");
       addBtn.className = "btn-add-item";
       addBtn.textContent = "+ Add Item";
@@ -407,7 +417,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Cria o elemento de cada Chip de Array
   function createChipElement(claimKey, text, index) {
     const chip = document.createElement("div");
     chip.className = "chip-item";
@@ -424,7 +433,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return chip;
   }
 
-  // Renderiza a Seção de Assinatura no Pretty Builder
   function renderSignatureSection() {
     const item = document.createElement("div");
     item.className = "claim-item";
@@ -442,7 +450,6 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.prettyAccordion.appendChild(item);
   }
 
-  // Callback ao modificar o Payload
   function onPayloadModified() {
     syncDecodedViews();
     if (state.autoSync) {
@@ -450,27 +457,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Listeners de Eventos
-
-  // 1. Edição no Encoded JWT
   elements.jwtEncodedInput.addEventListener("input", (e) => {
-    const val = e.target.value;
-    parseEncodedJwt(val);
+    parseEncodedJwt(e.target.value);
   });
 
-  // Sincronização do Scroll da Overlay do Highlight
   elements.jwtEncodedInput.addEventListener("scroll", (e) => {
     elements.jwtHighlightOverlay.scrollTop = e.target.scrollTop;
     elements.jwtHighlightOverlay.scrollLeft = e.target.scrollLeft;
   });
 
-  // 2. Edição no Secret Key
   elements.secretKeyInput.addEventListener("input", (e) => {
     state.secretKey = e.target.value;
     if (state.autoSync) {
       buildAndSetEncodedJwt();
     } else {
-      // Apenas revalida a assinatura atual
       const parts = state.encodedJwt.trim().split(".");
       if (parts.length === 3) {
         state.isSignatureValid = verifySignature(
@@ -484,7 +484,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 3. Edição na Aba Raw JSON
   elements.rawJsonTextarea.addEventListener("input", (e) => {
     try {
       state.payloadObj = JSON.parse(e.target.value);
@@ -492,18 +491,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (state.autoSync) {
         buildAndSetEncodedJwt();
       }
-    } catch (err) {
-      // JSON inválido enquanto digita
-    }
+    } catch (err) {}
   });
 
-  // 4. Busca / Filtro no Pretty Builder
   elements.prettySearchInput.addEventListener("input", (e) => {
     state.searchTerm = e.target.value;
     renderPrettyBuilder();
   });
 
-  // 5. Alternância de Tabs
   elements.tabBtnRaw.addEventListener("click", () => {
     elements.tabBtnRaw.classList.add("active");
     elements.tabBtnPretty.classList.remove("active");
@@ -518,12 +513,10 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.tabContentRaw.classList.remove("active");
   });
 
-  // 6. Auto Sync Toggle
   elements.chkAutoSync.addEventListener("change", (e) => {
     state.autoSync = e.target.checked;
   });
 
-  // 7. Botões de Cópia
   function setupCopyButton(buttonEl, getTextFn) {
     if (!buttonEl) return;
     buttonEl.addEventListener("click", () => {
@@ -545,12 +538,83 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCopyButton(elements.btnCopyPrettyTop, () => JSON.stringify(state.payloadObj, null, 2));
   setupCopyButton(elements.btnCopyPrettyBottom, () => JSON.stringify(state.payloadObj, null, 2));
 
-  // Token de Inicialização de Exemplo
-  const sampleToken =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-    "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicGVybWlzc2lvbnMiOlsiaW50ZWdyYXRpb24uZXhlY3V0aW9uLmdldCIsImludGVncmF0aW9uLmV4ZWN1dGlvbi5zdGFydCIsImludGVncmF0aW9uLndlYmhvb2siLCJpbnRlZ3JhdGlvbi5tYXJrZXRwbGFjZS5saXN0IiwiaW50ZWdyYXRpb24ubWFuYWdlbWVudC5lZGl0b3IiLCJ2Mi5iYWNrb2ZmaWNlIiwidjIubGl2ZSIsInYyLmJpbGxpbmciLCJ2Mi5hZG1pbiIsInBsYXRmb3JtLnByb2ZpbGUuZWRpdCIsInBsYXRmb3JtLnNlZ21lbnQudmlldyIsImZpbGVzLnVwbG9hZCIsImZpbGVzLmRvd25sb2FkLm93biIsImN1c3RvbWVyLnVzZXJzLnZpZXciLCJjdXN0b21lci51c2Vycy5jcmVhdGUiLCJjdX31Y3RvbWVyLnVzZXJzLmVkaXQiLCJjdXN0b21lci51c2Vycy5kZWxldGUiLCJjdXN0b21lci5vcmdhbml6YXRpb25zLnZpZXciLCJjdXN0b21lci5vcmdhbml6YXRpb25zLmVkaXQiLCJjdXN0b21lci5iaWxsaW5nLnZpZXciLCJjdXN0b21lci5iaWxsaW5nLmVkaXQiLCJjdXN0b21lci5pbnZvaWNlcy52aWV3IiwidXNlcnMucGF5Il0sInJvbGVzIjpbIm93bmVyIiwiYWRtaW4iXSwiY29tcGFueSI6eyJuYW1lIjoiUGxhdGFmb3JtYSIsInNsdWciOiJwbGF0YWZvcm1hLWNvcmUifX0." +
-    "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+  function parsePayloadOnly(token) {
+    if (!token) return null;
+    const parts = token.trim().split(".");
+    let payloadStr = "";
 
-  elements.jwtEncodedInput.value = sampleToken;
-  parseEncodedJwt(sampleToken);
+    if (parts.length === 3) payloadStr = base64UrlDecode(parts[1]);
+    else if (parts.length === 2) payloadStr = base64UrlDecode(parts[1]);
+    else if (parts.length === 1) payloadStr = base64UrlDecode(parts[0]);
+
+    if (!payloadStr) return null;
+    try {
+      return JSON.parse(payloadStr);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function compareJwts() {
+    const rawA = elements.comparatorJwtA.value;
+    const rawB = elements.comparatorJwtB.value;
+
+    if (!rawA.trim() || !rawB.trim()) {
+      elements.comparatorResult.style.display = "none";
+      elements.comparatorResult.innerHTML = "";
+      return;
+    }
+
+    const objA = parsePayloadOnly(rawA);
+    const objB = parsePayloadOnly(rawB);
+
+    elements.comparatorResult.style.display = "block";
+
+    if (!objA || !objB) {
+      elements.comparatorResult.innerHTML =
+        '<span style="color: var(--accent-red)">Erro: Não foi possível decodificar o payload de um ou ambos os tokens para comparação.</span>';
+      return;
+    }
+
+    const keysA = Object.keys(objA);
+    const keysB = Object.keys(objB);
+    const allKeys = Array.from(new Set([...keysA, ...keysB]));
+
+    let diffHtml = "";
+    let diffCount = 0;
+
+    allKeys.forEach((key) => {
+      const hasA = key in objA;
+      const hasB = key in objB;
+
+      if (hasA && !hasB) {
+        diffCount++;
+        diffHtml += `<div class="diff-line"><span class="diff-tag diff-removed">REMOVED</span> <strong>${escapeHtml(key)}</strong> (Presente apenas no JWT A): <code>${escapeHtml(JSON.stringify(objA[key]))}</code></div>`;
+      } else if (!hasA && hasB) {
+        diffCount++;
+        diffHtml += `<div class="diff-line"><span class="diff-tag diff-added">ADDED</span> <strong>${escapeHtml(key)}</strong> (Presente apenas no JWT B): <code>${escapeHtml(JSON.stringify(objB[key]))}</code></div>`;
+      } else {
+        const strA = JSON.stringify(objA[key]);
+        const strB = JSON.stringify(objB[key]);
+
+        if (strA !== strB) {
+          diffCount++;
+          diffHtml += `<div class="diff-line"><span class="diff-tag diff-changed">CHANGED</span> <strong>${escapeHtml(key)}</strong>:<br>&nbsp;&nbsp;A: <code>${escapeHtml(strA)}</code><br>&nbsp;&nbsp;B: <code>${escapeHtml(strB)}</code></div>`;
+        }
+      }
+    });
+
+    if (diffCount === 0) {
+      elements.comparatorResult.innerHTML =
+        '<span style="color: var(--accent-green)">✔ Os payloads de ambos os JWTs são idênticos!</span>';
+    } else {
+      elements.comparatorResult.innerHTML =
+        `<div style="margin-bottom: 10px; color: var(--text-dim); font-weight: bold;">Identificadas ${diffCount} diferença(s):</div>` + diffHtml;
+    }
+  }
+
+  elements.comparatorJwtA.addEventListener("input", compareJwts);
+  elements.comparatorJwtB.addEventListener("input", compareJwts);
+
+  parseEncodedJwt("");
 });

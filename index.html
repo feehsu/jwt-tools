@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JWT Tools - Studio Pro</title>
   <link rel="stylesheet" href="styles.css" />
-  <!-- CryptoJS para assinatura HMAC SHA256 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
-  <!-- Header principal -->
   <header class="app-header">
     <div class="header-title">JWT Tools - Studio Pro</div>
     <div class="header-controls">
@@ -20,10 +18,7 @@
     </div>
   </header>
 
-  <!-- Container principal de 2 colunas de altura fixa -->
   <main class="main-container">
-    
-    <!-- Painel Esquerdo: Encoded JWT -->
     <section class="panel panel-left">
       <div class="panel-header">
         <span class="panel-label">ENCODED JWT</span>
@@ -36,7 +31,7 @@
           <textarea
             id="jwt-encoded-input"
             class="jwt-textarea"
-            placeholder="Paste your encoded JWT here..."
+            placeholder="Paste your encoded JWT or Payload here..."
             spellcheck="false"
           ></textarea>
         </div>
@@ -61,7 +56,6 @@
       </div>
     </section>
 
-    <!-- Painel Direito: Decoded / Tabs (Raw JSON & Pretty Builder) -->
     <section class="panel panel-right">
       <div class="panel-tabs-header">
         <div class="tabs-nav">
@@ -70,7 +64,6 @@
         </div>
       </div>
 
-      <!-- Conteúdo da Aba Raw JSON -->
       <div id="tab-content-raw" class="tab-content">
         <div class="tab-sub-header">
           <button id="btn-copy-decoded-top" class="btn btn-secondary">Copy JSON</button>
@@ -88,7 +81,6 @@
         </div>
       </div>
 
-      <!-- Conteúdo da Aba Pretty Builder -->
       <div id="tab-content-pretty" class="tab-content active">
         <div class="tab-sub-header pretty-sub-header">
           <div class="search-input-wrapper">
@@ -107,9 +99,7 @@
         </div>
 
         <div class="panel-content pretty-builder-content">
-          <div id="pretty-builder-accordion" class="accordion-list">
-            <!-- claims / header / signature dinâmicos -->
-          </div>
+          <div id="pretty-builder-accordion" class="accordion-list"></div>
         </div>
 
         <div class="panel-fixed-footer">
@@ -117,10 +107,8 @@
         </div>
       </div>
     </section>
-
   </main>
 
-  <!-- Divisor e Seção JWT Comparator -->
   <hr class="section-divider" />
 
   <section class="comparator-section">
@@ -128,16 +116,14 @@
     <div class="comparator-grid">
       <div class="comparator-col">
         <label>JWT A</label>
-        <textarea id="comparator-jwt-a" class="code-textarea" placeholder="Paste JWT A..."></textarea>
+        <textarea id="comparator-jwt-a" class="code-textarea comparator-textarea" placeholder="Paste JWT A..."></textarea>
       </div>
       <div class="comparator-col">
         <label>JWT B</label>
-        <textarea id="comparator-jwt-b" class="code-textarea" placeholder="Paste JWT B..."></textarea>
+        <textarea id="comparator-jwt-b" class="code-textarea comparator-textarea" placeholder="Paste JWT B..."></textarea>
       </div>
     </div>
-    <div id="comparator-result" class="comparator-result">
-      <!-- Diferenças serão renderizadas aqui -->
-    </div>
+    <div id="comparator-result" class="comparator-result"></div>
   </section>
 
   <script src="app.js"></script>

@@ -26,9 +26,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
-/* Header */
 .app-header {
   height: 50px;
   background-color: var(--bg-card);
@@ -57,17 +57,16 @@ body {
   accent-color: var(--primary);
 }
 
-/* Layout Principal de 2 Colunas */
 .main-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 35% 65%;
   gap: 16px;
   padding: 16px;
   height: calc(100vh - 50px);
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
-/* Painéis */
 .panel {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -75,6 +74,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -100,28 +100,36 @@ body {
   overflow-y: auto;
   padding: 16px;
   position: relative;
+  min-height: 0;
 }
 
-/* Custom Scrollbar Fina */
 .panel-content::-webkit-scrollbar,
-.array-expanded-box::-webkit-scrollbar {
+.array-expanded-box::-webkit-scrollbar,
+.jwt-highlight-overlay::-webkit-scrollbar,
+.jwt-textarea::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 .panel-content::-webkit-scrollbar-track,
-.array-expanded-box::-webkit-scrollbar-track {
+.array-expanded-box::-webkit-scrollbar-track,
+.jwt-highlight-overlay::-webkit-scrollbar-track,
+.jwt-textarea::-webkit-scrollbar-track {
   background: var(--bg-card);
 }
 
 .panel-content::-webkit-scrollbar-thumb,
-.array-expanded-box::-webkit-scrollbar-thumb {
+.array-expanded-box::-webkit-scrollbar-thumb,
+.jwt-highlight-overlay::-webkit-scrollbar-thumb,
+.jwt-textarea::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 3px;
 }
 
 .panel-content::-webkit-scrollbar-thumb:hover,
-.array-expanded-box::-webkit-scrollbar-thumb:hover {
+.array-expanded-box::-webkit-scrollbar-thumb:hover,
+.jwt-highlight-overlay::-webkit-scrollbar-thumb:hover,
+.jwt-textarea::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
 }
 
@@ -132,7 +140,6 @@ body {
   flex-shrink: 0;
 }
 
-/* Botoes */
 .btn {
   border: none;
   border-radius: 4px;
@@ -166,12 +173,11 @@ body {
   width: 100%;
 }
 
-/* Encoded JWT Highlight Overlay */
 .jwt-editor-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 250px;
+  min-height: 200px;
 }
 
 .jwt-highlight-overlay,
@@ -189,14 +195,14 @@ body {
   white-space: pre-wrap;
   word-break: break-all;
   border-radius: 6px;
+  overflow-y: auto;
 }
 
 .jwt-highlight-overlay {
   pointer-events: none;
   background-color: var(--bg-input);
   border: 1px solid var(--border-color);
-  color: transparent;
-  overflow-y: auto;
+  color: var(--text-main);
 }
 
 .jwt-textarea {
@@ -212,13 +218,11 @@ body {
   color: var(--text-dim);
 }
 
-/* Cores dos segmentos do JWT */
-.jwt-part-header { color: var(--primary-light); }
-.jwt-part-payload { color: var(--primary); }
-.jwt-part-signature { color: var(--text-dim); }
+.jwt-part-header { color: var(--primary-light); font-weight: 600; }
+.jwt-part-payload { color: var(--primary); font-weight: 600; }
+.jwt-part-signature { color: var(--text-dim); font-weight: 600; }
 .jwt-part-dot { color: var(--text-main); font-weight: bold; }
 
-/* Secret Key Block */
 .secret-key-block {
   margin-bottom: 12px;
 }
@@ -251,13 +255,18 @@ body {
   border-color: var(--primary);
 }
 
-#secret-validation-badge {
-  position: absolute;
-  right: 8px;
+.badge {
   font-size: 0.7rem;
   padding: 3px 8px;
   border-radius: 3px;
   font-weight: 700;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+#secret-validation-badge {
+  position: absolute;
+  right: 8px;
   pointer-events: none;
 }
 
@@ -273,7 +282,6 @@ body {
   border: 1px solid var(--accent-red);
 }
 
-/* Tabs */
 .panel-tabs-header {
   height: 48px;
   border-bottom: 1px solid var(--border-color);
@@ -310,6 +318,7 @@ body {
   flex: 1;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .tab-content.active {
@@ -330,7 +339,6 @@ body {
   gap: 12px;
 }
 
-/* Custom Search Input */
 .search-input-wrapper {
   position: relative;
   flex: 1;
@@ -374,7 +382,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Pretty Builder Accordions */
 .accordion-list {
   display: flex;
   flex-direction: column;
@@ -425,7 +432,6 @@ body {
   gap: 8px;
 }
 
-/* Botão ALL por Claim */
 .btn-all-toggle {
   background: transparent;
   border: 1px solid var(--primary-light);
@@ -461,7 +467,6 @@ body {
   border-top: 1px solid var(--border-color);
 }
 
-/* Renderização de Arrays / Chips */
 .chips-preview-container {
   display: flex;
   flex-wrap: wrap;
@@ -503,7 +508,6 @@ body {
   text-decoration: underline;
 }
 
-/* Caixa com Scroll para Array Expandido */
 .array-expanded-box {
   max-height: 260px;
   overflow-y: auto;
@@ -534,22 +538,20 @@ body {
   color: var(--primary-light);
 }
 
-/* Signature Block */
 .signature-block-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* Seção Comparator */
 .section-divider {
   border: none;
   border-top: 1px solid var(--border-color);
-  margin: 20px 0;
+  margin: 24px 0;
 }
 
 .comparator-section {
-  padding: 0 16px 20px 16px;
+  padding: 0 16px 32px 16px;
 }
 
 .comparator-title {
@@ -571,6 +573,11 @@ body {
   margin-bottom: 6px;
 }
 
+.comparator-textarea {
+  min-height: 120px;
+  height: 120px;
+}
+
 .comparator-result {
   margin-top: 12px;
   padding: 12px;
@@ -580,4 +587,33 @@ body {
   font-size: 0.85rem;
   font-family: monospace;
   display: none;
+}
+
+.diff-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  margin-right: 6px;
+  font-weight: 600;
+}
+
+.diff-added {
+  background-color: rgba(0, 184, 148, 0.2);
+  color: var(--accent-green);
+}
+
+.diff-removed {
+  background-color: rgba(255, 118, 117, 0.2);
+  color: var(--accent-red);
+}
+
+.diff-changed {
+  background-color: rgba(253, 203, 110, 0.2);
+  color: var(--accent-amber);
+}
+
+.diff-line {
+  margin-bottom: 6px;
+  line-height: 1.4;
 }
