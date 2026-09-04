@@ -1,118 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JWT Tools - Studio Pro</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JWT Tools - Studio Pro</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- CryptoJS para assinatura HMAC SHA256 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
-
-    <div class="header">
-        <h1>JWT Tools - Studio Pro</h1>
-        <div class="sync-option">
-            <label>
-                <input type="checkbox" id="auto-sync" checked>
-                Auto Sync
-            </label>
-        </div>
+  <!-- Header principal -->
+  <header class="app-header">
+    <div class="header-title">JWT Tools - Studio Pro</div>
+    <div class="header-controls">
+      <label class="auto-sync-label">
+        <input type="checkbox" id="chk-auto-sync" checked />
+        <span>Auto Sync</span>
+      </label>
     </div>
+  </header>
 
-    <div class="main-container">
-        <div class="panel-left">
-            <div class="panel-header">
-                <h3>Encoded JWT</h3>
-                <div class="actions-group">
-                    <button class="btn-action" id="btn-decode-manual" style="display: none;">Decode &gt;</button>
-                    <button class="btn-copy" id="btn-copy-encoded-top">Copy</button>
-                </div>
-            </div>
-            
-            <textarea id="encoded" placeholder="Paste your encoded JWT here..."></textarea>
-            <div class="error-msg" id="error-encoded"></div>
+  <!-- Container principal de 2 colunas de altura fixa -->
+  <main class="main-container">
+    
+    <!-- Painel Esquerdo: Encoded JWT -->
+    <section class="panel panel-left">
+      <div class="panel-header">
+        <span class="panel-label">ENCODED JWT</span>
+        <button id="btn-copy-encoded-top" class="btn btn-secondary">Copy</button>
+      </div>
 
-            <div class="secret-box">
-                <label for="secret-key">Secret Key (HMAC SHA256):</label>
-                <input type="text" id="secret-key" placeholder="your-256-bit-secret">
-            </div>
+      <div class="panel-content">
+        <div class="jwt-editor-wrapper">
+          <div id="jwt-highlight-overlay" class="jwt-highlight-overlay"></div>
+          <textarea
+            id="jwt-encoded-input"
+            class="jwt-textarea"
+            placeholder="Paste your encoded JWT here..."
+            spellcheck="false"
+          ></textarea>
+        </div>
+      </div>
 
-            <div class="panel-footer">
-                <button class="btn-copy" id="btn-copy-encoded-bottom">Copy Encoded</button>
-            </div>
+      <div class="panel-fixed-footer">
+        <div class="secret-key-block">
+          <label for="secret-key-input">Secret Key (HMAC SHA256):</label>
+          <div class="secret-key-input-wrapper">
+            <input
+              type="text"
+              id="secret-key-input"
+              class="input-text"
+              placeholder="your-256-bit-secret"
+              value="your-256-bit-secret"
+              spellcheck="false"
+            />
+            <span id="secret-validation-badge" class="badge badge-invalid">INVALID</span>
+          </div>
+        </div>
+        <button id="btn-copy-encoded-bottom" class="btn btn-primary full-width">Copy Encoded</button>
+      </div>
+    </section>
+
+    <!-- Painel Direito: Decoded / Tabs (Raw JSON & Pretty Builder) -->
+    <section class="panel panel-right">
+      <div class="panel-tabs-header">
+        <div class="tabs-nav">
+          <button id="tab-btn-raw" class="tab-btn">Raw JSON</button>
+          <button id="tab-btn-pretty" class="tab-btn active">Pretty Builder</button>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba Raw JSON -->
+      <div id="tab-content-raw" class="tab-content">
+        <div class="tab-sub-header">
+          <button id="btn-copy-decoded-top" class="btn btn-secondary">Copy JSON</button>
+        </div>
+        <div class="panel-content">
+          <textarea
+            id="raw-json-textarea"
+            class="code-textarea"
+            placeholder="{ &quot;sub&quot;: &quot;1234567890&quot;... }"
+            spellcheck="false"
+          ></textarea>
+        </div>
+        <div class="panel-fixed-footer">
+          <button id="btn-copy-decoded-bottom" class="btn btn-primary full-width">Copy Raw</button>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba Pretty Builder -->
+      <div id="tab-content-pretty" class="tab-content active">
+        <div class="tab-sub-header pretty-sub-header">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              id="pretty-search-input"
+              class="input-search"
+              placeholder="Filter claims and values..."
+            />
+          </div>
+          <button id="btn-copy-pretty-top" class="btn btn-secondary btn-copy-json-pretty">Copy JSON</button>
         </div>
 
-        <div class="panel-right">
-            <div class="tabs">
-                <button class="tab-btn active" id="tab-btn-raw">Raw JSON</button>
-                <button class="tab-btn" id="tab-btn-pretty">Pretty Builder</button>
-            </div>
-
-            <div class="tab-content active" id="tab-raw">
-                <div class="panel-header">
-                    <h3>Raw Editor</h3>
-                    <div class="actions-group">
-                        <button class="btn-action" id="btn-encode-manual" style="display: none;">&lt; Encode</button>
-                        <button class="btn-copy" id="btn-copy-decoded-top">Copy JSON</button>
-                    </div>
-                </div>
-                
-                <div id="decoded-editor" contenteditable="true" class="highlight-editor" spellcheck="false"></div>
-                <div class="error-msg" id="error-decoded"></div>
-
-                <div class="panel-footer">
-                    <button class="btn-copy" id="btn-copy-decoded-bottom">Copy Raw</button>
-                </div>
-            </div>
-
-            <div class="tab-content" id="tab-pretty">
-                <div id="pretty-builder"></div>
-                
-                <div class="panel-footer" style="margin-top: 15px;">
-                    <button class="btn-copy" id="btn-copy-pretty-bottom">Copy Current JSON</button>
-                </div>
-            </div>
+        <div class="panel-content pretty-builder-content">
+          <div id="pretty-builder-accordion" class="accordion-list">
+            <!-- claims / header / signature dinâmicos -->
+          </div>
         </div>
+
+        <div class="panel-fixed-footer">
+          <button id="btn-copy-pretty-bottom" class="btn btn-primary full-width">Copy Current JSON</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Divisor e Seção JWT Comparator -->
+  <hr class="section-divider" />
+
+  <section class="comparator-section">
+    <h2 class="comparator-title">JWT Comparator</h2>
+    <div class="comparator-grid">
+      <div class="comparator-col">
+        <label>JWT A</label>
+        <textarea id="comparator-jwt-a" class="code-textarea" placeholder="Paste JWT A..."></textarea>
+      </div>
+      <div class="comparator-col">
+        <label>JWT B</label>
+        <textarea id="comparator-jwt-b" class="code-textarea" placeholder="Paste JWT B..."></textarea>
+      </div>
     </div>
-
-    <hr class="section-divider">
-
-    <div class="comparator-container">
-        <h2>JWT Comparator</h2>
-        
-        <div class="comparator-grid">
-            <div class="comparator-card">
-                <h3>Token 1</h3><br>
-                <textarea id="comp-jwt-1" placeholder="Paste first JWT..."></textarea>
-                
-                <div class="tabs" style="margin-top: 10px;">
-                    <button class="tab-btn active" id="comp1-tab-raw">Raw</button>
-                    <button class="tab-btn" id="comp1-tab-pretty">Pretty</button>
-                </div>
-
-                <div id="comp-1-raw" class="tab-content active">
-                    <div class="highlight-editor" id="comp-1-raw-text"></div>
-                </div>
-                <div id="comp-1-pretty" class="tab-content"></div>
-            </div>
-
-            <div class="comparator-card">
-                <h3>Token 2</h3><br>
-                <textarea id="comp-jwt-2" placeholder="Paste second JWT..."></textarea>
-                
-                <div class="tabs" style="margin-top: 10px;">
-                    <button class="tab-btn active" id="comp2-tab-raw">Raw</button>
-                    <button class="tab-btn" id="comp2-tab-pretty">Pretty</button>
-                </div>
-
-                <div id="comp-2-raw" class="tab-content active">
-                    <div class="highlight-editor" id="comp-2-raw-text"></div>
-                </div>
-                <div id="comp-2-pretty" class="tab-content"></div>
-            </div>
-        </div>
+    <div id="comparator-result" class="comparator-result">
+      <!-- Diferenças serão renderizadas aqui -->
     </div>
+  </section>
 
-    <script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
