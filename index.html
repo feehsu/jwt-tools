@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JWT Tools - Studio Pro</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="jwt-compare.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
   <header class="app-header">
-    <div class="header-title">JWT Tools - Studio Pro</div>
+    <div class="header-title">
+      JWT Tools - Studio Pro
+    </div>
     <div class="header-controls">
       <label class="auto-sync-label">
         <input type="checkbox" id="chk-auto-sync" checked />
@@ -19,22 +22,20 @@
   </header>
 
   <main class="main-container">
-    <section class="panel panel-left">
+    <!-- PANEL 1: ENCODED JWT -->
+    <section class="panel panel-encoded">
       <div class="panel-header">
         <span class="panel-label">ENCODED JWT</span>
         <button id="btn-copy-encoded-top" class="btn btn-secondary">Copy</button>
       </div>
 
-      <div class="panel-content">
-        <div class="jwt-editor-wrapper">
-          <div id="jwt-highlight-overlay" class="jwt-highlight-overlay"></div>
-          <textarea
-            id="jwt-encoded-input"
-            class="jwt-textarea"
-            placeholder="Paste your encoded JWT or Payload here..."
-            spellcheck="false"
-          ></textarea>
-        </div>
+      <div class="panel-content panel-encoded-content">
+        <textarea
+          id="jwt-encoded-input"
+          class="jwt-textarea jwt-compact-input"
+          placeholder="Paste your encoded JWT here..."
+          spellcheck="false"
+        ></textarea>
       </div>
 
       <div class="panel-fixed-footer">
@@ -56,76 +57,181 @@
       </div>
     </section>
 
-    <section class="panel panel-right">
-      <div class="panel-tabs-header">
-        <div class="tabs-nav">
-          <button id="tab-btn-raw" class="tab-btn">Raw JSON</button>
-          <button id="tab-btn-pretty" class="tab-btn active">Pretty Builder</button>
+    <!-- PANEL 2: RAW JSON -->
+    <section class="panel panel-raw">
+      <div class="panel-header">
+        <span class="panel-label">RAW JSON</span>
+        <div class="header-actions">
+          <button id="btn-toggle-all-raw" class="btn btn-secondary btn-sm">Expand/Collapse All</button>
+          <button id="btn-copy-raw-top" class="btn btn-secondary">Copy</button>
         </div>
       </div>
 
-      <div id="tab-content-raw" class="tab-content">
-        <div class="tab-sub-header">
-          <button id="btn-copy-decoded-top" class="btn btn-secondary">Copy JSON</button>
-        </div>
-        <div class="panel-content">
-          <textarea
-            id="raw-json-textarea"
-            class="code-textarea"
-            placeholder="{ &quot;sub&quot;: &quot;1234567890&quot;... }"
-            spellcheck="false"
-          ></textarea>
-        </div>
-        <div class="panel-fixed-footer">
-          <button id="btn-copy-decoded-bottom" class="btn btn-primary full-width">Copy Raw</button>
+      <div class="panel-sub-header">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            id="raw-search-input"
+            class="input-search"
+            placeholder="Highlight json content..."
+          />
         </div>
       </div>
 
-      <div id="tab-content-pretty" class="tab-content active">
-        <div class="tab-sub-header pretty-sub-header">
-          <div class="search-input-wrapper">
-            <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              type="text"
-              id="pretty-search-input"
-              class="input-search"
-              placeholder="Filter claims and values..."
-            />
-          </div>
-          <button id="btn-copy-pretty-top" class="btn btn-secondary btn-copy-json-pretty">Copy JSON</button>
+      <div class="panel-content raw-column-content">
+        <div class="header-json-block">
+          <div class="block-title">HEADER</div>
+          <div id="raw-header-container" class="code-editor-container"></div>
         </div>
 
-        <div class="panel-content pretty-builder-content">
-          <div id="pretty-builder-accordion" class="accordion-list"></div>
+        <div class="payload-json-block">
+          <div class="block-title">PAYLOAD</div>
+          <div id="raw-payload-container" class="code-editor-container"></div>
         </div>
+      </div>
 
-        <div class="panel-fixed-footer">
-          <button id="btn-copy-pretty-bottom" class="btn btn-primary full-width">Copy Current JSON</button>
+      <div class="panel-fixed-footer">
+        <button id="btn-copy-raw-bottom" class="btn btn-primary full-width">Copy Raw Payload</button>
+      </div>
+    </section>
+
+    <!-- PANEL 3: PRETTY BUILDER -->
+    <section class="panel panel-pretty">
+      <div class="panel-header">
+        <span class="panel-label">PRETTY BUILDER</span>
+        <button id="btn-toggle-all-pretty" class="btn btn-secondary btn-sm">Expand/Collapse All</button>
+      </div>
+
+      <div class="panel-sub-header">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            id="pretty-search-input"
+            class="input-search"
+            placeholder="Filter claims and values..."
+          />
         </div>
+      </div>
+
+      <div class="panel-content pretty-builder-content">
+        <div id="pretty-builder-accordion" class="accordion-list"></div>
       </div>
     </section>
   </main>
 
   <hr class="section-divider" />
 
-  <section class="comparator-section">
-    <h2 class="comparator-title">JWT Comparator</h2>
-    <div class="comparator-grid">
-      <div class="comparator-col">
-        <label>JWT A</label>
-        <textarea id="comparator-jwt-a" class="code-textarea comparator-textarea" placeholder="Paste JWT A..."></textarea>
-      </div>
-      <div class="comparator-col">
-        <label>JWT B</label>
-        <textarea id="comparator-jwt-b" class="code-textarea comparator-textarea" placeholder="Paste JWT B..."></textarea>
+  <!-- SECTION: JWT COMPARATOR -->
+  <section id="jwt-comparator" class="comparator-section">
+    <div class="comparator-header">
+      <h2 class="comparator-title">
+        JWT Comparator
+        <a href="#jwt-comparator" class="anchor-link" title="Direct link">🔗</a>
+      </h2>
+      <div class="comparator-controls">
+        <div class="search-input-wrapper comparator-search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            id="comparator-search-input"
+            class="input-search"
+            placeholder="Filter claims..."
+          />
+        </div>
+        <div class="tabs-nav">
+          <button id="comp-tab-pretty" class="tab-btn active">Pretty</button>
+          <button id="comp-tab-raw" class="tab-btn">Raw JSON</button>
+        </div>
       </div>
     </div>
-    <div id="comparator-result" class="comparator-result"></div>
+
+    <div class="comparator-inputs-grid">
+      <div class="comparator-input-card">
+        <div class="card-header">
+          <label>JWT A</label>
+          <div class="card-header-btns">
+            <button id="btn-copy-encoded-a" class="btn btn-secondary btn-sm">Copy Encoded</button>
+          </div>
+        </div>
+        <textarea id="comparator-jwt-a" class="jwt-textarea comparator-textarea" placeholder="Paste JWT A..."></textarea>
+      </div>
+
+      <div class="comparator-input-card">
+        <div class="card-header">
+          <label>JWT B</label>
+          <div class="card-header-btns">
+            <button id="btn-copy-encoded-b" class="btn btn-secondary btn-sm">Copy Encoded</button>
+          </div>
+        </div>
+        <textarea id="comparator-jwt-b" class="jwt-textarea comparator-textarea" placeholder="Paste JWT B..."></textarea>
+      </div>
+    </div>
+
+    <div id="comparator-view-pretty" class="comparator-view active">
+      <div class="comparator-diff-grid">
+        <div class="diff-col">
+          <div class="col-title-bar">
+            <span class="col-title">JWT A - Pretty</span>
+            <div class="col-actions">
+              <button id="btn-toggle-comp-pretty-a" class="btn btn-secondary btn-sm">Expand/Collapse All</button>
+            </div>
+          </div>
+          <div id="comp-pretty-a-accordion" class="accordion-list scrollable-code"></div>
+        </div>
+        <div class="diff-col">
+          <div class="col-title-bar">
+            <span class="col-title">JWT B - Pretty</span>
+            <div class="col-actions">
+              <button id="btn-toggle-comp-pretty-b" class="btn btn-secondary btn-sm">Expand/Collapse All</button>
+            </div>
+          </div>
+          <div id="comp-pretty-b-accordion" class="accordion-list scrollable-code"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="comparator-view-raw" class="comparator-view">
+      <div class="comparator-diff-grid">
+        <div class="diff-col">
+          <div class="col-title-bar">
+            <span class="col-title">JWT A - Raw JSON</span>
+            <div class="col-actions">
+              <button id="btn-toggle-comp-raw-a" class="btn btn-secondary btn-sm">Expand/Collapse All</button>
+              <button id="btn-copy-json-a" class="btn btn-secondary btn-sm">Copy JSON</button>
+            </div>
+          </div>
+          <div id="comp-raw-a-container" class="code-editor-container scrollable-code"></div>
+        </div>
+        <div class="diff-col">
+          <div class="col-title-bar">
+            <span class="col-title">JWT B - Raw JSON</span>
+            <div class="col-actions">
+              <button id="btn-toggle-comp-raw-b" class="btn btn-secondary btn-sm">Expand/Collapse All</button>
+              <button id="btn-copy-json-b" class="btn btn-secondary btn-sm">Copy JSON</button>
+            </div>
+          </div>
+          <div id="comp-raw-b-container" class="code-editor-container scrollable-code"></div>
+        </div>
+      </div>
+    </div>
   </section>
 
+  <footer class="app-footer">
+    <p>Fat ®</p>
+  </footer>
+
   <script src="app.js"></script>
+  <script src="jwt-compare.js"></script>
 </body>
 </html>
