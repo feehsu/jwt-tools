@@ -1,0 +1,207 @@
+.comparator-section {
+  padding: 0 16px 32px 16px;
+  box-sizing: border-box;
+}
+
+.comparator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.comparator-title {
+  font-size: 1.1rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comparator-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.comparator-search-wrapper {
+  width: 250px;
+}
+
+.tabs-nav {
+  display: flex;
+  gap: 8px;
+  background-color: var(--bg-card);
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.tab-btn.active {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.comparator-inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.comparator-input-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-header label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.card-header-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.comparator-textarea {
+  font-size: 0.75rem;
+  height: 90px;
+  min-height: 90px;
+  max-height: 150px;
+  resize: vertical;
+  display: block;
+}
+
+.comparator-view {
+  display: none;
+}
+
+.comparator-view.active {
+  display: block;
+}
+
+.comparator-diff-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.diff-col {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.col-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.col-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.col-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scrollable-code {
+  max-height: 450px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* Regra para conter strings longas com scroll interno horizontal sem vazar */
+.claim-string-value {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-family: monospace;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.diff-highlight-added {
+  background-color: rgba(0, 184, 148, 0.2);
+  border-left: 3px solid var(--accent-green);
+  padding-left: 4px;
+}
+
+.diff-highlight-removed {
+  background-color: rgba(255, 118, 117, 0.2);
+  border-left: 3px solid var(--accent-red);
+  padding-left: 4px;
+}
+
+.diff-highlight-changed {
+  background-color: rgba(253, 203, 110, 0.2);
+  border-left: 3px solid var(--accent-amber);
+  padding-left: 4px;
+}
+
+@media (max-width: 900px) {
+  .comparator-inputs-grid,
+  .comparator-diff-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comparator-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .comparator-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .comparator-search-wrapper {
+    width: 100%;
+  }
+}
