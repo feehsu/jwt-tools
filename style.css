@@ -251,6 +251,24 @@ body {
   border-color: var(--primary);
 }
 
+.signature-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.signature-value-row label {
+  min-width: 74px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.signature-value-row .input-text:disabled {
+  opacity: 0.9;
+  cursor: default;
+}
+
 .badge {
   font-size: 0.7rem;
   padding: 3px 8px;
@@ -365,6 +383,11 @@ body {
   resize: vertical;
   outline: none;
   box-sizing: border-box;
+}
+
+.raw-json-editor {
+  min-height: 160px;
+  resize: vertical;
 }
 
 .object-json-textarea {

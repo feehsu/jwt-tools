@@ -4,6 +4,7 @@ window.AppState = {
   headerObj: { alg: "HS256", typ: "JWT" },
   payloadObj: {},
   signature: "",
+  encodedFormat: "empty",
   secretKey: "your-256-bit-secret",
   isSignatureValid: false,
   autoSync: true,
@@ -13,6 +14,7 @@ window.AppState = {
   rawSearchTerm: "",
 
   rawAllExpanded: true,
+  rawEditMode: false,
   prettyAllExpanded: true,
 
   foldedLinesHeader: {},
@@ -224,6 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
     rawSearchInput: document.getElementById("raw-search-input"),
     rawHeaderContainer: document.getElementById("raw-header-container"),
     rawPayloadContainer: document.getElementById("raw-payload-container"),
+    btnToggleRawMode: document.getElementById("btn-toggle-raw-mode"),
     btnToggleAllRaw: document.getElementById("btn-toggle-all-raw"),
 
     prettySearchInput: document.getElementById("pretty-search-input"),
@@ -240,6 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
     AppState.headerObj = {};
     AppState.payloadObj = {};
     AppState.signature = "";
+    AppState.encodedFormat = "empty";
     AppState.isSignatureValid = false;
 
     elements.rawHeaderContainer.innerHTML = "";
@@ -267,6 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
           AppState.payloadObj = JSON.parse(payloadStr);
           AppState.headerObj = { alg: "HS256", typ: "JWT" };
           AppState.signature = "";
+          AppState.encodedFormat = "payload";
           isValidStructure = true;
           AppState.isSignatureValid = false;
         } catch (e) {}
@@ -280,6 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
           AppState.headerObj = JSON.parse(headerStr);
           AppState.payloadObj = JSON.parse(payloadStr);
           AppState.signature = parts[2] || "";
+          AppState.encodedFormat = parts.length === 3 && parts[2] ? "signed" : "unsigned";
           isValidStructure = true;
 
           if (parts.length === 3 && parts[2]) {
@@ -301,6 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
         AppState.payloadObj = JSON.parse(token);
         AppState.headerObj = { alg: "HS256", typ: "JWT" };
         AppState.signature = "";
+        AppState.encodedFormat = "json";
         isValidStructure = true;
         AppState.isSignatureValid = false;
       } catch (e) {}
@@ -319,8 +326,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function buildAndSetEncodedJwt() {
     try {
-      const headerB64 = JWTUtils.base64UrlEncode(JSON.stringify(AppState.headerObj));
       const payloadB64 = JWTUtils.base64UrlEncode(JSON.stringify(AppState.payloadObj));
+      if (AppState.encodedFormat === "payload") {
+        AppState.encodedJwt = payloadB64;
+        AppState.signature = "";
+        elements.jwtEncodedInput.value = AppState.encodedJwt;
+        elements.jwtEncodedInput.classList.remove("input-invalid");
+        updateValidationUI(false);
+        return;
+      }
+
+      if (AppState.encodedFormat === "json") {
+        AppState.encodedJwt = JSON.stringify(AppState.payloadObj);
+        AppState.signature = "";
+        elements.jwtEncodedInput.value = AppState.encodedJwt;
+        elements.jwtEncodedInput.classList.remove("input-invalid");
+        updateValidationUI(false);
+        return;
+      }
+
+      const headerB64 = JWTUtils.base64UrlEncode(JSON.stringify(AppState.headerObj));
+      if (AppState.encodedFormat === "unsigned") {
+        AppState.encodedJwt = `${headerB64}.${payloadB64}`;
+        AppState.signature = "";
+        elements.jwtEncodedInput.value = AppState.encodedJwt;
+        elements.jwtEncodedInput.classList.remove("input-invalid");
+        updateValidationUI(false);
+        return;
+      }
+
       const newSignature = JWTUtils.computeHmacSignature(
         headerB64,
         payloadB64,
@@ -337,18 +371,55 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {}
   }
 
-  function updateValidationUI(isValid) {
-    AppState.isSignatureValid = isValid;
-    if (isValid) {
-      elements.secretValidationBadge.textContent = "VERIFIED";
-      elements.secretValidationBadge.className = "badge badge-verified";
-    } else {
-      elements.secretValidationBadge.textContent = "INVALID";
-      elements.secretValidationBadge.className = "badge badge-invalid";
+  function updateSignatureValueInput() {
+    const signatureInput = document.getElementById("signature-value-input");
+    const secretKeyValueInput = document.getElementById("signature-secret-key");
+    if (signatureInput && AppState.isSignatureValid) {
+      signatureInput.value = AppState.signature;
+      if (secretKeyValueInput) {
+        secretKeyValueInput.value = AppState.secretKey;
+      }
+    } else if (signatureInput) {
+      signatureInput.remove();
+      if (secretKeyValueInput) {
+        secretKeyValueInput.parentElement.remove();
+      }
+    } else if (AppState.isSignatureValid) {
+      const signatureHeader = document.querySelector(".signature-block-header");
+      if (signatureHeader) {
+        renderPrettyBuilder();
+      }
     }
   }
 
+  function updateValidationUI(isValid) {
+    AppState.isSignatureValid = isValid;
+    const signatureStatusBadge = document.getElementById("signature-status-badge");
+    if (isValid) {
+      elements.secretValidationBadge.textContent = "VERIFIED";
+      elements.secretValidationBadge.className = "badge badge-verified";
+      if (signatureStatusBadge) {
+        signatureStatusBadge.textContent = "VERIFIED";
+        signatureStatusBadge.className = "badge badge-verified";
+      }
+    } else {
+      elements.secretValidationBadge.textContent = "INVALID";
+      elements.secretValidationBadge.className = "badge badge-invalid";
+      if (signatureStatusBadge) {
+        signatureStatusBadge.textContent = "INVALID";
+        signatureStatusBadge.className = "badge badge-invalid";
+      }
+    }
+    updateSignatureValueInput();
+  }
+
   function renderRawJsonView() {
+    if (AppState.rawEditMode) {
+      renderRawJsonEditor(elements.rawHeaderContainer, AppState.headerObj, "header");
+      renderRawJsonEditor(elements.rawPayloadContainer, AppState.payloadObj, "payload");
+      return;
+    }
+
     JWTUtils.renderFoldableCode(
       elements.rawHeaderContainer,
       AppState.headerObj,
@@ -361,6 +432,47 @@ document.addEventListener("DOMContentLoaded", () => {
       AppState.foldedLinesPayload,
       AppState.rawSearchTerm
     );
+  }
+
+  function renderRawJsonEditor(container, jsonObj, part) {
+    container.innerHTML = "";
+
+    const editor = document.createElement("textarea");
+    editor.className = "code-textarea raw-json-editor";
+    editor.spellcheck = false;
+    editor.value = JSON.stringify(jsonObj, null, 2);
+
+    editor.addEventListener("input", (event) => {
+      try {
+        const parsedValue = JSON.parse(event.target.value);
+        if (!parsedValue || typeof parsedValue !== "object" || Array.isArray(parsedValue)) {
+          throw new Error("JSON must be an object");
+        }
+
+        if (part === "header") {
+          AppState.headerObj = parsedValue;
+        } else {
+          AppState.payloadObj = parsedValue;
+        }
+
+        editor.classList.remove("input-invalid");
+        if (AppState.autoSync) {
+          buildAndSetEncodedJwt();
+          renderPrettyBuilder();
+        } else {
+          updateValidationUI(false);
+          renderPrettyBuilder();
+        }
+      } catch (error) {
+        editor.classList.add("input-invalid");
+      }
+    });
+
+    container.appendChild(editor);
+  }
+
+  function updateRawModeButton() {
+    elements.btnToggleRawMode.textContent = AppState.rawEditMode ? "Read" : "Edit";
   }
 
   function renderPrettyBuilder() {
@@ -512,7 +624,13 @@ document.addEventListener("DOMContentLoaded", () => {
           const inputVal = bodyEl.querySelector(".claim-simple-value");
           inputVal.addEventListener("input", (e) => {
             AppState.payloadObj[key] = e.target.value;
-            onPayloadModified();
+            renderRawJsonView();
+            if (AppState.autoSync) {
+              buildAndSetEncodedJwt();
+            } else {
+              AppState.isSignatureValid = false;
+              updateValidationUI(false);
+            }
           });
         } else {
           bodyEl.innerHTML = `<div class="input-text claim-string-value" style="background: transparent; border: none;">${JWTUtils.highlightText(String(val), filter)}</div>`;
@@ -609,9 +727,19 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="claim-header signature-block-header">
         <div class="claim-header-left">
           <span class="claim-title">☉ SIGNATURE</span>
-          <span class="badge ${badgeClass}">${badgeText}</span>
+          <span id="signature-status-badge" class="badge ${badgeClass}">${badgeText}</span>
         </div>
       </div>
+      ${AppState.isSignatureValid ? `
+        <div class="signature-value-row">
+          <label for="signature-secret-key">Secret Key:</label>
+          <input id="signature-secret-key" class="input-text" type="text" value="${JWTUtils.escapeHtml(AppState.secretKey)}" disabled />
+        </div>
+        <div class="signature-value-row">
+          <label for="signature-value-input">Encoded:</label>
+          <input id="signature-value-input" class="input-text" type="text" value="${JWTUtils.escapeHtml(AppState.signature)}" disabled />
+        </div>
+      ` : ""}
     `;
     elements.prettyAccordion.appendChild(item);
   }
@@ -644,9 +772,6 @@ document.addEventListener("DOMContentLoaded", () => {
       updateValidationUI(false);
     }
 
-    if (AppState.autoSync && parts.length >= 2) {
-      buildAndSetEncodedJwt();
-    }
   });
 
   elements.rawSearchInput.addEventListener("input", (e) => {
@@ -661,6 +786,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   elements.chkAutoSync.addEventListener("change", (e) => {
     AppState.autoSync = e.target.checked;
+  });
+
+  elements.btnToggleRawMode.addEventListener("click", () => {
+    AppState.rawEditMode = !AppState.rawEditMode;
+    updateRawModeButton();
+    renderRawJsonView();
   });
 
   elements.btnToggleAllRaw.addEventListener("click", () => {
@@ -683,5 +814,6 @@ document.addEventListener("DOMContentLoaded", () => {
   JWTUtils.setupCopyButton(elements.btnCopyRawTop, () => JSON.stringify(AppState.payloadObj, null, 2));
   JWTUtils.setupCopyButton(elements.btnCopyRawBottom, () => JSON.stringify(AppState.payloadObj, null, 2));
 
+  updateRawModeButton();
   parseEncodedJwt("");
 });
